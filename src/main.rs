@@ -20,6 +20,9 @@ struct Cli {
     #[arg(short, long, value_name = "depth")]
     perft: Option<u8>,
 
+    #[arg(short, long, value_name = "depth")]
+    search: Option<u8>,
+
     #[arg(short, long, default_value_t = false)]
     verbose: bool,
 
@@ -30,17 +33,24 @@ struct Cli {
 fn main() {
     let cli = Cli::parse();
 
-    if let Some(depth) = cli.perft {
-        let mut pos = cli
-            .epd
-            .map_or(Position::start_pos(), |str| Position::from_epd(str));
+    let mut pos = cli
+        .epd
+        .map_or(Position::start_pos(), |str| Position::from_epd(str));
 
+    if let Some(depth) = cli.perft {
         if cli.verbose {
             debug_perft(&mut pos, depth.into(), vec![]);
         } else {
             let nodes = perft(&mut pos, depth.into());
             println!("depth {} nodes {}", depth, nodes)
         }
+    } else if let Some(depth) = cli.search {
+        let res = engine(&pos, depth as i16);
+        println!(
+            "bestmove {} eval {}",
+            res.0.map_or("-".to_string(), |m| m.to_lan()),
+            res.1 / 100
+        );
     } else {
         uci();
     }
@@ -73,10 +83,13 @@ fn uci() {
             }
         } else if line.starts_with("go") {
             // go wtime 9999 btime 10000 movestogo 10 depth 1
+            let spl: Vec<_> = line.split(" ").collect();
+            let depth_idx = spl.iter().position(|p| *p == "depth").unwrap();
+            let depth: i16 = spl[depth_idx + 1].parse().unwrap();
 
-            let mov = engine(&position);
+            let mov = engine(&position, depth);
 
-            println!("bestmove {}", mov.to_lan());
+            println!("bestmove {}", mov.0.unwrap().to_lan());
         }
     }
 }

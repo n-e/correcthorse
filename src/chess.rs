@@ -733,8 +733,8 @@ impl Board {
 
 #[derive(Clone)]
 pub struct Position {
-    board: Board,
-    side: Color,
+    pub board: Board,
+    pub side: Color,
     white_castling_rights: (bool, bool),
     black_castling_rights: (bool, bool),
     ep_square: Option<Square>,
