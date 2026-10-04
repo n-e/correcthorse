@@ -4,7 +4,7 @@ set -e
 
 mkdir -p bin
 
-REF=HEAD~
+REF=HEAD
 
 TARGET=bin/correcthorse-$(git describe --always $REF)
 

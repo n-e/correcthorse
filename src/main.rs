@@ -48,7 +48,11 @@ fn main() {
         let res = engine(&pos, depth as i16);
         println!(
             "bestmove {} eval {}",
-            res.0.map_or("-".to_string(), |m| m.to_lan()),
+            res.0
+                .iter()
+                .map(|m| m.to_lan())
+                .collect::<Vec<_>>()
+                .join(" "),
             res.1 / 100
         );
     } else {
@@ -89,7 +93,7 @@ fn uci() {
 
             let mov = engine(&position, depth);
 
-            println!("bestmove {}", mov.0.unwrap().to_lan());
+            println!("bestmove {}", mov.0[0].to_lan());
         }
     }
 }

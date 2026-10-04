@@ -183,7 +183,7 @@ impl Move {
     }
 }
 
-#[derive(BitAnd, BitOr, Clone, Copy)]
+#[derive(BitAnd, BitOr, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BitBoard(i64);
 
 impl Not for BitBoard {
@@ -308,7 +308,7 @@ impl BitBoard {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Board {
     pieces: [BitBoard; 6],
     white: BitBoard,

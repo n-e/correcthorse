@@ -1,7 +1,32 @@
-use crate::chess::{Move, Position};
+use crate::chess::{Move, Piece, Position};
+
+fn piece_score(piece: Piece) -> i64 {
+    match piece {
+        Piece::King => 0,
+        Piece::Queen => 900,
+        Piece::Rook => 500,
+        Piece::Bishop => 300,
+        Piece::Knight => 300,
+        Piece::Pawn => 100,
+    }
+}
 
 pub fn eval(pos: &Position) -> i64 {
-    return rand::random_range(-5..5);
+    let rnd: i64 = rand::random_range(-5..5);
+
+    let piece_eval: i64 = pos
+        .board
+        .iterate_squares()
+        .map(|x| {
+            if let Some((s, p, c)) = x {
+                sign(c) * piece_score(p)
+            } else {
+                0
+            }
+        })
+        .sum();
+
+    piece_eval + rnd
 }
 
 // function negamax(node, depth, color) is
@@ -19,9 +44,9 @@ fn sign(color: crate::chess::Color) -> i64 {
     }
 }
 
-pub fn engine(pos: &Position, depth: i16) -> (Option<Move>, i64) {
+pub fn engine(pos: &Position, depth: i16) -> (Vec<Move>, i64) {
     if depth == 0 {
-        return (None, sign(pos.side) * eval(pos));
+        return (vec![], sign(pos.side) * eval(pos));
     }
 
     let moves = pos.pseudo_legal_moves();
@@ -36,14 +61,14 @@ pub fn engine(pos: &Position, depth: i16) -> (Option<Move>, i64) {
 
     if legal_moves.len() == 0 {
         if pos.board.is_in_check(pos.side) {
-            return (None, -100 * 1000);
+            return (vec![], -100 * 1000);
         } else {
-            return (None, 0);
+            return (vec![], 0);
         }
     }
 
     let mut eval = i64::MIN;
-    let mut selected_move: Option<Move> = None;
+    let mut selected_pv: Vec<Move> = vec![];
     for mov in legal_moves {
         let mut p2 = pos.clone();
         p2.play(mov);
@@ -53,9 +78,9 @@ pub fn engine(pos: &Position, depth: i16) -> (Option<Move>, i64) {
 
         if res.1 > eval {
             eval = res.1;
-            selected_move = Some(mov.clone());
+            selected_pv = [vec![mov.clone()], res.0].concat();
         }
     }
 
-    (selected_move, eval)
+    (selected_pv, eval)
 }
