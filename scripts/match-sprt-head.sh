@@ -36,5 +36,6 @@ cutechess-cli \
         proto=uci \
         tc=1+1 \
     -rounds 100 \
-    -sprt elo0=10 elo1=0 alpha=0.05 beta=0.05 \
+    -concurrency 4 \
+    -sprt elo0=0 elo1=100 alpha=0.05 beta=0.05 \
     -pgnout out.pgn
