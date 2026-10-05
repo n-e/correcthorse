@@ -1,6 +1,13 @@
-use std::time::{Duration, Instant};
+use std::{
+    cmp,
+    time::{Duration, Instant},
+};
 
 use crate::chess::{Move, Piece, Position};
+
+const MIN_EVAL: i64 = -424242 * 100;
+const MATE_0_EVAL: i64 = 1000 * 100;
+const MAX_EVAL: i64 = 424242 * 100;
 
 fn piece_score(piece: Piece) -> i64 {
     match piece {
@@ -50,6 +57,8 @@ fn sign(color: crate::chess::Color) -> i64 {
 pub fn negamax(
     pos: &Position,
     depth: i16,
+    alpha: i64,
+    beta: i64,
     globals: &mut EngineGlobals,
 ) -> Option<(Vec<Move>, i64)> {
     if depth == 0 {
@@ -78,30 +87,45 @@ pub fn negamax(
 
     if legal_moves.len() == 0 {
         if pos.board.is_in_check(pos.side) {
-            return Some((vec![], -100 * 1000));
+            return Some((vec![], -MATE_0_EVAL));
         } else {
             return Some((vec![], 0));
         }
     }
 
-    let mut eval = i64::MIN;
+    let mut eval = MIN_EVAL;
     let mut selected_pv: Vec<Move> = vec![];
+    let mut updated_alpha = alpha;
     for mov in legal_moves {
         let mut p2 = pos.clone();
         p2.play(mov);
 
-        let res = negamax(&p2, depth - 1, globals);
+        let res = negamax(&p2, depth - 1, -beta, -updated_alpha, globals);
 
         if let Some(mut res) = res {
             res.1 = -res.1;
+
+            // eprintln!("{}",)
 
             if res.1 > eval {
                 eval = res.1;
                 selected_pv = [vec![mov.clone()], res.0].concat();
             }
+
+            updated_alpha = cmp::max(eval, updated_alpha);
+            if updated_alpha >= beta {
+                break;
+            }
         } else {
             return None;
         }
+    }
+
+    if eval > MATE_0_EVAL - 100 {
+        eval = eval - 5
+    }
+    if eval < -MATE_0_EVAL + 100 {
+        eval = eval + 5
     }
 
     Some((selected_pv, eval))
@@ -145,7 +169,7 @@ pub fn engine(pos: &Position, opts: &EngineOpts) -> (Vec<Move>, i64) {
     let mut depth: i16 = 1;
     let mut best = None;
     loop {
-        let ret = negamax(pos, depth, &mut globals);
+        let ret = negamax(pos, depth, MIN_EVAL, MAX_EVAL, &mut globals);
         // println!("{:?} {}", ret, depth);
 
         if let Some(ret) = ret {

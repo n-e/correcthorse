@@ -29,7 +29,6 @@ cutechess-cli \
     -engine \
     name=correcthorse-$(git describe --always $REF) \
     cmd=./$TARGET \
-    depth=4 \
 \
     -each \
         proto=uci \

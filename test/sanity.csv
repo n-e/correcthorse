@@ -1,0 +1,13 @@
+rnbqkbnr/ppppp2p/5p2/6p1/3PP3/8/PPP2PPP/RNBQKBNR w KQkq -,Mate in 1 (white),3,d1h5,1000
+r5k1/5ppp/8/8/8/6PP/5PPP/7K w - -,Escapes mate,3,h1g1,-1000
+3r3k/6pp/4Q2N/8/8/8/8/K7 w - -,Mate in 2 or 3 (white),4,,1000
+rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq -,Mate in 1 (black),4,d8h4,1000
+5R2/4N2p/8/6p1/2R1p1k1/2B1P3/2P2PPP/5K2 w - -,Should capture the pawns,3,c4e4
+
+6k1/8/3q2p1/K7/6q1/7n/8/8 b - -,Should mate in the shortest way,4,g4b4,1000
+# 8/6K1/8/3k4/8/8/8/1q6 w - -,Mate with Queen and King,7
+# 3k1b2/8/2R5/5P2/6PP/8/7K/8 w - -,5,Should push pawns to make progress
+
+7k/3n3p/7n/2p5/1p2KRP1/1r4P1/7P/q7 w - -,Avoids mate in 1,5,e4d5|f4f8
+
+# rn2k1nr/2pb3p/1p3qp1/p2p4/1P2p3/N3P1Q1/PRPPBP1P/3K2NR w kq - 1 17,Failed tactic that should be improved by quiescence,5
