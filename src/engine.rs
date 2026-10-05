@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use crate::chess::{Move, Piece, Position};
 
 fn piece_score(piece: Piece) -> i64 {
@@ -44,9 +46,24 @@ fn sign(color: crate::chess::Color) -> i64 {
     }
 }
 
-pub fn engine(pos: &Position, depth: i16) -> (Vec<Move>, i64) {
+// returns None if interrupted
+pub fn negamax(
+    pos: &Position,
+    depth: i16,
+    globals: &mut EngineGlobals,
+) -> Option<(Vec<Move>, i64)> {
     if depth == 0 {
-        return (vec![], sign(pos.side) * eval(pos));
+        globals.nodes += 1;
+
+        if globals.nodes % 10_000 == 0
+            && globals
+                .allowed_time
+                .is_some_and(|at| globals.start_time.elapsed() > at)
+        {
+            return None;
+        }
+
+        return Some((vec![], sign(pos.side) * eval(pos)));
     }
 
     let moves = pos.pseudo_legal_moves();
@@ -61,9 +78,9 @@ pub fn engine(pos: &Position, depth: i16) -> (Vec<Move>, i64) {
 
     if legal_moves.len() == 0 {
         if pos.board.is_in_check(pos.side) {
-            return (vec![], -100 * 1000);
+            return Some((vec![], -100 * 1000));
         } else {
-            return (vec![], 0);
+            return Some((vec![], 0));
         }
     }
 
@@ -73,14 +90,88 @@ pub fn engine(pos: &Position, depth: i16) -> (Vec<Move>, i64) {
         let mut p2 = pos.clone();
         p2.play(mov);
 
-        let mut res = engine(&p2, depth - 1);
-        res.1 = -res.1;
+        let res = negamax(&p2, depth - 1, globals);
 
-        if res.1 > eval {
-            eval = res.1;
-            selected_pv = [vec![mov.clone()], res.0].concat();
+        if let Some(mut res) = res {
+            res.1 = -res.1;
+
+            if res.1 > eval {
+                eval = res.1;
+                selected_pv = [vec![mov.clone()], res.0].concat();
+            }
+        } else {
+            return None;
         }
     }
 
-    (selected_pv, eval)
+    Some((selected_pv, eval))
+}
+
+pub struct EngineOpts {
+    pub wtime: u64,
+    pub btime: u64,
+    pub winc: u64,
+    pub binc: u64,
+    pub depth: i16,
+}
+
+pub struct EngineGlobals {
+    nodes: i64,
+    start_time: Instant,
+    allowed_time: Option<Duration>,
+}
+
+pub fn engine(pos: &Position, opts: &EngineOpts) -> (Vec<Move>, i64) {
+    let mut globals = EngineGlobals {
+        nodes: 0,
+        start_time: Instant::now(),
+        allowed_time: None,
+    };
+
+    match pos.side {
+        crate::chess::Color::White => {
+            if opts.wtime > 0 {
+                globals.allowed_time = Some(Duration::from_millis(opts.wtime / 5))
+            }
+        }
+        crate::chess::Color::Black => {
+            if opts.btime > 0 {
+                globals.allowed_time = Some(Duration::from_millis(opts.btime / 5))
+            }
+        }
+    }
+    // println!("{:?}", globals.allowed_time);
+
+    let mut depth: i16 = 1;
+    let mut best = None;
+    loop {
+        let ret = negamax(pos, depth, &mut globals);
+        // println!("{:?} {}", ret, depth);
+
+        if let Some(ret) = ret {
+            println!(
+                "info depth {} score cp {} time {} nodes {} nps {} pv {}",
+                depth,
+                ret.1,
+                globals.start_time.elapsed().as_millis(),
+                globals.nodes,
+                globals.nodes as f64 / globals.start_time.elapsed().as_secs_f64(),
+                ret.0
+                    .iter()
+                    .map(|x| x.to_lan())
+                    .collect::<Vec<_>>()
+                    .join(" "),
+            );
+
+            best = Some(ret);
+        } else {
+            return best.unwrap();
+        }
+
+        if opts.depth > 0 && depth >= opts.depth {
+            return best.unwrap();
+        }
+
+        depth += 1;
+    }
 }

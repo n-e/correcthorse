@@ -6,19 +6,17 @@ rm out.pgn
 
 cutechess-cli \
     -engine \
-    name=jsengine-depth1 \
+    "name=correcthorse" \
     cmd=./target/release/correcthorse \
     stderr=/dev/stdout \
-    depth=1 \
 \
     -engine \
-    name=jsengine-depth2 \
+    "name=correcthorse" \
     cmd=./target/release/correcthorse \
-    depth=1 \
 \
     -each \
         proto=uci \
-        tc=1+1 \
+        tc=0:5+1 \
     -rounds 1 \
     -debug \
     -pgnout out.pgn

@@ -25,7 +25,6 @@ cutechess-cli \
     name=correcthorse-$(git describe --always --dirty) \
     cmd=./target/release/correcthorse \
     stderr=/dev/stdout \
-    depth=4 \
 \
     -engine \
     name=correcthorse-$(git describe --always $REF) \
@@ -34,7 +33,7 @@ cutechess-cli \
 \
     -each \
         proto=uci \
-        tc=1+1 \
+        tc=0:5+1 \
     -rounds 100 \
     -concurrency 4 \
     -sprt elo0=0 elo1=100 alpha=0.05 beta=0.05 \

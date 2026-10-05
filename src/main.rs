@@ -2,7 +2,10 @@ mod chess;
 mod engine;
 mod perft;
 mod util;
-use std::io::{self, BufRead};
+use std::{
+    collections::HashMap,
+    io::{self, BufRead},
+};
 
 use clap::Parser;
 
@@ -10,7 +13,7 @@ use perft::perft;
 
 use crate::{
     chess::{Move, Position},
-    engine::engine,
+    engine::{EngineOpts, engine},
     perft::debug_perft,
 };
 
@@ -45,7 +48,16 @@ fn main() {
             println!("depth {} nodes {}", depth, nodes)
         }
     } else if let Some(depth) = cli.search {
-        let res = engine(&pos, depth as i16);
+        let res = engine(
+            &pos,
+            &EngineOpts {
+                wtime: 0,
+                btime: 0,
+                winc: 0,
+                binc: 0,
+                depth: depth as i16,
+            },
+        );
         println!(
             "bestmove {} eval {}",
             res.0
@@ -87,13 +99,27 @@ fn uci() {
             }
         } else if line.starts_with("go") {
             // go wtime 9999 btime 10000 movestogo 10 depth 1
-            let spl: Vec<_> = line.split(" ").collect();
-            let depth_idx = spl.iter().position(|p| *p == "depth").unwrap();
-            let depth: i16 = spl[depth_idx + 1].parse().unwrap();
+            let opts = parse_options(&line);
 
-            let mov = engine(&position, depth);
+            let mov = engine(
+                &position,
+                &EngineOpts {
+                    wtime: opts.get("wtime").map_or(0, |x| x.parse().unwrap()),
+                    btime: opts.get("btime").map_or(0, |x| x.parse().unwrap()),
+                    winc: opts.get("winc").map_or(0, |x| x.parse().unwrap()),
+                    binc: opts.get("binc").map_or(0, |x| x.parse().unwrap()),
+                    depth: opts.get("depth").map_or(0, |x| x.parse().unwrap()),
+                },
+            );
 
             println!("bestmove {}", mov.0[0].to_lan());
         }
     }
+}
+
+fn parse_options(s: &str) -> HashMap<&str, &str> {
+    s.split_whitespace().collect::<Vec<_>>()[1..]
+        .chunks_exact(2)
+        .map(|pair| (pair[0], pair[1]))
+        .collect()
 }
